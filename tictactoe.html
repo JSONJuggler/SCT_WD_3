@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberGrid Battle</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-purple: #d100ff;
+            --dark-bg: #0a0a16;
+            --darker-bg: #050510;
+            --panel-bg: rgba(15, 15, 35, 0.8);
+            --text-light: #e0e0ff;
+            --grid-color: #1a1a3a;
+            --x-color: var(--neon-blue);
+            --o-color: var(--neon-purple);
+            --hover-glow: 0 0 15px;
+        }
+
+        body {
+            font-family: 'Orbitron', 'Rajdhani', sans-serif;
+            background: var(--dark-bg);
+            color: var(--text-light);
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(0, 243, 255, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 85% 30%, rgba(209, 0, 255, 0.05) 0%, transparent 20%),
+                linear-gradient(to bottom, var(--darker-bg) 0%, var(--dark-bg) 100%);
+        }
+
+        .cyber-border {
+            position: relative;
+            border: 1px solid var(--neon-blue);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.5),
+                        inset 0 0 10px rgba(0, 243, 255, 0.3);
+        }
+
+        .cyber-border::before, .cyber-border::after {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--neon-blue);
+            box-shadow: 0 0 10px var(--neon-blue);
+        }
+
+        .cyber-border::before {
+            top: -5px;
+            left: -5px;
+        }
+
+        .cyber-border::after {
+            bottom: -5px;
+            right: -5px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: rgba(10, 10, 22, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 243, 255, 0.3);
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            text-shadow: 0 0 10px var(--neon-blue);
+        }
+
+        .logo-icon {
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--dark-bg);
+            font-weight: bold;
+            transform: skew(-5deg);
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .cyber-btn {
+            background: transparent;
+            border: 1px solid var(--neon-blue);
+            color: var(--text-light);
+            padding: 8px 16px;
+            border-radius: 0;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 5px var(--neon-blue);
+        }
+
+        .cyber-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 243, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+
+        .cyber-btn:hover::before {
+            left: 100%;
+        }
+
+        .cyber-btn:hover {
+            box-shadow: 0 0 15px var(--neon-blue);
+            background: rgba(0, 243, 255, 0.1);
+        }
+
+        .cyber-btn-primary {
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
+            color: var(--dark-bg);
+            font-weight: bold;
+            border: none;
+            text-shadow: none;
+        }
+
+        .cyber-btn-primary:hover {
+            box-shadow: 0 0 20px var(--neon-purple);
+        }
+
+        .game-container {
+            background: var(--panel-bg);
+            border: 1px solid var(--neon-blue);
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.2),
+                        inset 0 0 30px rgba(0, 243, 255, 0.1);
+            padding: 40px;
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+            margin-top: 100px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            z-index: -1;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple), var(--neon-blue));
+            animation: border-glow 3s linear infinite;
+        }
+
+        @keyframes border-glow {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+
+        .title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+        }
+
+        .subtitle {
+            color: #a0a0ff;
+            margin-bottom: 30px;
+            line-height: 1.5;
+            font-size: 1.1rem;
+        }
+
+        .mode-selection {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 12px 20px;
+            background: transparent;
+            border: 1px solid var(--neon-purple);
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mode-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(209, 0, 255, 0.2), transparent);
+            transform: translateX(-100%);
+            transition: 0.5s;
+        }
+
+        .mode-btn:hover::before {
+            transform: translateX(100%);
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
+            color: var(--dark-bg);
+            font-weight: bold;
+            border-color: transparent;
+        }
+
+        .game-status {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 20px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-shadow: 0 0 10px var(--neon-blue);
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 30px auto;
+            max-width: 300px;
+            position: relative;
+        }
+
+        .game-board::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            border: 1px solid var(--neon-blue);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            background: rgba(15, 15, 35, 0.7);
+            border: 1px solid var(--grid-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cell::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, transparent 30%, rgba(0, 243, 255, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .cell:hover::before {
+            opacity: 1;
+        }
+
+        .cell:hover {
+            border-color: var(--neon-blue);
+            box-shadow: inset 0 0 15px rgba(0, 243, 255, 0.2);
+        }
+
+        .cell.x {
+            color: var(--x-color);
+            text-shadow: 0 0 15px var(--x-color);
+            animation: placeX 0.3s ease;
+        }
+
+        .cell.o {
+            color: var(--o-color);
+            text-shadow: 0 0 15px var(--o-color);
+            animation: placeO 0.3s ease;
+        }
+
+        .cell.winning {
+            background: linear-gradient(45deg, rgba(0, 243, 255, 0.2), rgba(209, 0, 255, 0.2)) !important;
+            animation: winPulse 1s infinite;
+        }
+
+        @keyframes placeX {
+            0% { transform: scale(0) rotate(90deg); opacity: 0; }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        @keyframes placeO {
+            0% { transform: scale(0); opacity: 0; }
+            70% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes winPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 243, 255, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(209, 0, 255, 0.7); }
+        }
+
+        .reset-btn {
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
+            color: var(--dark-bg);
+            border: none;
+            padding: 12px 30px;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .reset-btn:hover {
+            box-shadow: 0 0 25px rgba(209, 0, 255, 0.7);
+            transform: translateY(-2px);
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(15, 15, 35, 0.5);
+            border: 1px solid rgba(0, 243, 255, 0.3);
+            font-size: 0.9rem;
+        }
+
+        .score-item {
+            text-align: center;
+        }
+
+        .score-value {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: var(--neon-blue);
+            text-shadow: 0 0 10px var(--neon-blue);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .game-container {
+                padding: 20px;
+                margin-top: 80px;
+            }
+
+            .header {
+                padding: 10px 15px;
+            }
+
+            .title {
+                font-size: 2rem;
+            }
+
+            .mode-selection {
+                flex-direction: column;
+            }
+        }
+
+        .cyber-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.1;
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.3) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.3) 1px, transparent 1px);
+            background-size: 30px 30px;
+            transform: perspective(500px) rotateX(60deg) translateZ(0);
+            animation: grid-move 20s linear infinite;
+        }
+
+        @keyframes grid-move {
+            0% { background-position: 0 0; }
+            100% { background-position: 0 30px; }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Rajdhani:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="cyber-grid"></div>
+    
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon">C</div>
+            CyberGrid Battle
+        </div>
+        <div class="header-controls">
+            <button class="cyber-btn" id="soundToggle">🔊 Sound</button>
+            <button class="cyber-btn cyber-btn-primary" onclick="handleGoogleLogin()">
+                🔐 Cyber Login
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="game-container">
+            <h1 class="title">CyberGrid Battle</h1>
+            <p class="subtitle">Engage in a digital showdown of X and O. Outsmart the system or challenge a fellow hacker.</p>
+            
+            <div class="mode-selection">
+                <button class="mode-btn active" id="computerMode">🤖 VS AI</button>
+                <button class="mode-btn" id="humanMode">👥 PVP Mode</button>
+            </div>
+
+            <div class="game-status" id="gameStatus">PLAYER X TURN</div>
+
+            <div class="game-board" id="gameBoard">
+                <div class="cell" data-index="0"></div>
+                <div class="cell" data-index="1"></div>
+                <div class="cell" data-index="2"></div>
+                <div class="cell" data-index="3"></div>
+                <div class="cell" data-index="4"></div>
+                <div class="cell" data-index="5"></div>
+                <div class="cell" data-index="6"></div>
+                <div class="cell" data-index="7"></div>
+                <div class="cell" data-index="8"></div>
+            </div>
+
+            <button class="reset-btn" id="resetBtn">🔄 RESET MATRIX</button>
+
+            <div class="scoreboard">
+                <div class="score-item">
+                    <div>VICTORIES</div>
+                    <div class="score-value" id="wins">0</div>
+                </div>
+                <div class="score-item">
+                    <div>DEFEATS</div>
+                    <div class="score-value" id="losses">0</div>
+                </div>
+                <div class="score-item">
+                    <div>STALEMATES</div>
+                    <div class="score-value" id="draws">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let board = ['', '', '', '', '', '', '', '', ''];
+        let currentPlayer = 'X';
+        let gameMode = 'computer';
+        let gameActive = true;
+        let soundEnabled = true;
+        let scores = {
+            wins: parseInt(localStorage.getItem('cyber_wins') || '0'),
+            losses: parseInt(localStorage.getItem('cyber_losses') || '0'),
+            draws: parseInt(localStorage.getItem('cyber_draws') || '0')
+        };
+
+        const winningCombinations = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], 
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], 
+            [0, 4, 8], [2, 4, 6] 
+        ];
+
+        const sounds = {
+            move: new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA'),
+            win: new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA'),
+            draw: new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA')
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateScoreboard();
+            updateGameStatus();
+            
+            if (localStorage.getItem('cyber_sound') === 'false') {
+                soundEnabled = false;
+                document.getElementById('soundToggle').textContent = '🔇 Sound';
+            }
+            
+            document.getElementById('soundToggle').addEventListener('click', toggleSound);
+            document.getElementById('resetBtn').addEventListener('click', resetGame);
+            document.getElementById('computerMode').addEventListener('click', () => selectMode('computer'));
+            document.getElementById('humanMode').addEventListener('click', () => selectMode('human'));
+            
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    handleClick(index);
+                });
+            });
+        });
+
+        function handleClick(index) {
+            if (!gameActive || board[index] !== '') return;
+
+            playSound('move');
+            makeMove(index, currentPlayer);
+
+            if (gameMode === 'computer' && gameActive && currentPlayer === 'O') {
+                setTimeout(() => {
+                    makeAIMove();
+                }, 500);
+            }
+        }
+
+        function makeMove(index, player) {
+            board[index] = player;
+            const cell = document.querySelectorAll('.cell')[index];
+            cell.textContent = player;
+            cell.classList.add(player.toLowerCase());
+
+            const winner = checkWinner();
+            if (winner) {
+                playSound('win');
+                endGame(winner);
+            } else if (board.every(cell => cell !== '')) {
+                playSound('draw');
+                endGame('draw');
+            } else {
+                currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                updateGameStatus();
+            }
+        }
+
+        function makeAIMove() {
+            const emptyCells = board.map((cell, index) => cell === '' ? index : null).filter(index => index !== null);
+            
+            if (emptyCells.length > 0 && gameActive) {
+                let aiMove = findWinningMove('O');
+                if (aiMove === -1) {
+                    aiMove = findWinningMove('X');
+                }
+                if (aiMove === -1) {
+                    if (board[4] === '') {
+                        aiMove = 4;
+                    } else {
+                        aiMove = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+                    }
+                }
+                makeMove(aiMove, 'O');
+            }
+        }
+
+        function findWinningMove(player) {
+            for (let combo of winningCombinations) {
+                const [a, b, c] = combo;
+                const line = [board[a], board[b], board[c]];
+                
+                if (line.filter(cell => cell === player).length === 2 && line.includes('')) {
+                    return combo[line.indexOf('')];
+                }
+            }
+            return -1;
+        }
+
+        function checkWinner() {
+            for (let combo of winningCombinations) {
+                const [a, b, c] = combo;
+                if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                    combo.forEach(index => {
+                        document.querySelectorAll('.cell')[index].classList.add('winning');
+                    });
+                    return board[a];
+                }
+            }
+            return null;
+        }
+
+        function endGame(result) {
+            gameActive = false;
+            
+            if (result === 'draw') {
+                updateGameStatus('MATRIX STALEMATE!');
+                scores.draws++;
+                localStorage.setItem('cyber_draws', scores.draws.toString());
+            } else {
+                updateGameStatus(`PLAYER ${result} VICTORY!`);
+                if (gameMode === 'computer') {
+                    if (result === 'X') {
+                        scores.wins++;
+                        localStorage.setItem('cyber_wins', scores.wins.toString());
+                    } else {
+                        scores.losses++;
+                        localStorage.setItem('cyber_losses', scores.losses.toString());
+                    }
+                }
+            }
+            updateScoreboard();
+        }
+
+        function updateGameStatus(message) {
+            const status = document.getElementById('gameStatus');
+            if (message) {
+                status.textContent = message;
+            } else {
+                status.textContent = `PLAYER ${currentPlayer} TURN`;
+            }
+        }
+
+        function resetGame() {
+            board = ['', '', '', '', '', '', '', '', ''];
+            currentPlayer = 'X';
+            gameActive = true;
+            
+            const cells = document.querySelectorAll('.cell');
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.className = 'cell';
+            });
+            
+            updateGameStatus();
+        }
+
+        function selectMode(mode) {
+            gameMode = mode;
+            
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            if (mode === 'computer') {
+                document.getElementById('computerMode').classList.add('active');
+            } else {
+                document.getElementById('humanMode').classList.add('active');
+            }
+            
+            resetGame();
+        }
+
+        function updateScoreboard() {
+            document.getElementById('wins').textContent = scores.wins;
+            document.getElementById('losses').textContent = scores.losses;
+            document.getElementById('draws').textContent = scores.draws;
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            localStorage.setItem('cyber_sound', soundEnabled.toString());
+            const soundBtn = document.getElementById('soundToggle');
+            soundBtn.textContent = soundEnabled ? '🔊 Sound' : '🔇 Sound';
+        }
+
+        function playSound(type) {
+            if (soundEnabled && sounds[type]) {
+                sounds[type].currentTime = 0;
+                sounds[type].play().catch(e => console.log("Audio play failed:", e));
+            }
+        }
+
+        function handleGoogleLogin() {
+            alert('Cyber authentication would be implemented here.');
+        }
+    </script>
+</body>
+</html>
